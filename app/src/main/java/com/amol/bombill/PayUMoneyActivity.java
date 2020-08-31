@@ -1,4 +1,4 @@
-package com.rahulhooda.integrationsampleapp_payumoneypnp;
+package com.amol.bombill;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -9,10 +9,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.IdRes;
 import android.support.design.widget.TextInputLayout;
-import android.support.v7.widget.AppCompatRadioButton;
-import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -23,9 +20,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RadioGroup;
-import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.payumoney.core.PayUmoneyConfig;
 import com.payumoney.core.PayUmoneyConstants;
@@ -52,9 +48,9 @@ import java.util.regex.Pattern;
 
 //import com.payumoney.sdkui.ui.utils.PPConfig;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener {
+public class PayUMoneyActivity extends BaseActivity implements View.OnClickListener {
 
-    public static final String TAG = "MainActivity : ";
+    public static final String TAG = "PayUMoneyActivity : ";
     private boolean isDisableExitConfirmation = false;
     private String userMobile, userEmail;
     private SharedPreferences settings;
@@ -62,12 +58,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private SharedPreferences userDetailsPreference;
     private EditText email_et, mobile_et, amount_et;
     private TextInputLayout email_til, mobile_til;
-    private RadioGroup radioGroup_color_theme, radioGroup_select_env;
-    private SwitchCompat switch_disable_wallet, switch_disable_netBanks, switch_disable_cards, switch_disable_ThirdPartyWallets, switch_disable_ExitConfirmation;
-    private TextView logoutBtn;
-    private AppCompatRadioButton radio_btn_default;
     private AppPreference mAppPreference;
-    private AppCompatRadioButton radio_btn_theme_purple, radio_btn_theme_pink, radio_btn_theme_green, radio_btn_theme_grey;
 
     private Button payNowButton;
     private PayUmoneySdkInitializer.PaymentParam mPaymentParams;
@@ -75,6 +66,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_main);
 
         mAppPreference = new AppPreference();
         Toolbar toolbar = (Toolbar) findViewById(R.id.custom_toolbar);
@@ -82,47 +74,34 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         toolbar.setTitleTextColor(Color.WHITE);
         toolbar.setTitle(getString(R.string.app_name));
         settings = getSharedPreferences("settings", MODE_PRIVATE);
-        logoutBtn = (TextView) findViewById(R.id.logout_button);
         email_et = (EditText) findViewById(R.id.email_et);
         mobile_et = (EditText) findViewById(R.id.mobile_et);
         amount_et = (EditText) findViewById(R.id.amount_et);
         amount_et.setFilters(new InputFilter[]{new DecimalDigitsInputFilter(7, 2)});
         email_til = (TextInputLayout) findViewById(R.id.email_til);
         mobile_til = (TextInputLayout) findViewById(R.id.mobile_til);
-        radioGroup_color_theme = (RadioGroup) findViewById(R.id.radio_grp_color_theme);
-        radio_btn_default = (AppCompatRadioButton) findViewById(R.id.radio_btn_theme_default);
-        radio_btn_theme_pink = (AppCompatRadioButton) findViewById(R.id.radio_btn_theme_pink);
-        radio_btn_theme_purple = (AppCompatRadioButton) findViewById(R.id.radio_btn_theme_purple);
-        radio_btn_theme_green = (AppCompatRadioButton) findViewById(R.id.radio_btn_theme_green);
-        radio_btn_theme_grey = (AppCompatRadioButton) findViewById(R.id.radio_btn_theme_grey);
 
-        if (PayUmoneyFlowManager.isUserLoggedIn(getApplicationContext())) {
-            logoutBtn.setVisibility(View.VISIBLE);
-        } else {
-            logoutBtn.setVisibility(View.GONE);
-        }
-
-        logoutBtn.setOnClickListener(this);
-        AppCompatRadioButton radio_btn_sandbox = (AppCompatRadioButton) findViewById(R.id.radio_btn_sandbox);
-        AppCompatRadioButton radio_btn_production = (AppCompatRadioButton) findViewById(R.id.radio_btn_production);
-        radioGroup_select_env = (RadioGroup) findViewById(R.id.radio_grp_env);
 
         payNowButton = (Button) findViewById(R.id.pay_now_button);
         payNowButton.setOnClickListener(this);
 
-        initListeners();
+        /** Initiate Listeners */
+        email_et.addTextChangedListener(new EditTextInputWatcher(email_til));
+        mobile_et.addTextChangedListener(new EditTextInputWatcher(mobile_til));
+        /** Select Environment */
+        selectSandBoxEnv();
+//        selectProdEnv();
 
-        //Set Up SharedPref
-        setUpUserDetails();
+        /** Setup PayUMoney Console Theme */
+//        radio_btn_default.setChecked(true);
 
-        if (settings.getBoolean("is_prod_env", false)) {
-            ((BaseApplication) getApplication()).setAppEnvironment(AppEnvironment.PRODUCTION);
-            radio_btn_production.setChecked(true);
-        } else {
-            ((BaseApplication) getApplication()).setAppEnvironment(AppEnvironment.SANDBOX);
-            radio_btn_sandbox.setChecked(true);
-        }
-        setupCitrusConfigs();
+        /** Set Up SharedPref */
+        userDetailsPreference = getSharedPreferences(AppPreference.USER_DETAILS, MODE_PRIVATE);
+        userEmail = userDetailsPreference.getString(AppPreference.USER_EMAIL, mAppPreference.getDummyEmail());
+        userMobile = userDetailsPreference.getString(AppPreference.USER_MOBILE, "");
+        email_et.setText(userEmail);
+        mobile_et.setText(userMobile);
+        amount_et.setText(mAppPreference.getDummyAmount());
     }
 
     public static String hashCal(String str) {
@@ -163,53 +142,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void setUpUserDetails() {
-        userDetailsPreference = getSharedPreferences(AppPreference.USER_DETAILS, MODE_PRIVATE);
-        userEmail = userDetailsPreference.getString(AppPreference.USER_EMAIL, mAppPreference.getDummyEmail());
 
-        userMobile = userDetailsPreference.getString(AppPreference.USER_MOBILE, "");
 
-        email_et.setText(userEmail);
-        mobile_et.setText(userMobile);
-        amount_et.setText(mAppPreference.getDummyAmount());
-        restoreAppPref();
     }
 
-    private void restoreAppPref() {
-
-
-        //Set Up saved theme pref
-        switch (AppPreference.selectedTheme) {
-            case -1:
-                radio_btn_default.setChecked(true);
-                break;
-            case R.style.AppTheme_pink:
-                radio_btn_theme_pink.setChecked(true);
-                break;
-            case R.style.AppTheme_Grey:
-                radio_btn_theme_grey.setChecked(true);
-                break;
-            case R.style.AppTheme_purple:
-                radio_btn_theme_purple.setChecked(true);
-                break;
-            case R.style.AppTheme_Green:
-                radio_btn_theme_green.setChecked(true);
-                break;
-            default:
-                radio_btn_default.setChecked(true);
-                break;
-        }
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         payNowButton.setEnabled(true);
-
-        if (PayUmoneyFlowManager.isUserLoggedIn(getApplicationContext())) {
-            logoutBtn.setVisibility(View.VISIBLE);
-        } else {
-            logoutBtn.setVisibility(View.GONE);
-        }
     }
 
     /**
@@ -225,13 +166,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 editor.putBoolean("is_prod_env", true);
                 editor.apply();
 
-                if (PayUmoneyFlowManager.isUserLoggedIn(getApplicationContext())) {
-                    logoutBtn.setVisibility(View.VISIBLE);
-                } else {
-                    logoutBtn.setVisibility(View.GONE);
-                }
-
-                setupCitrusConfigs();
             }
         }, AppPreference.MENU_DELAY);
     }
@@ -244,24 +178,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         editor = settings.edit();
         editor.putBoolean("is_prod_env", false);
         editor.apply();
-
-        if (PayUmoneyFlowManager.isUserLoggedIn(getApplicationContext())) {
-            logoutBtn.setVisibility(View.VISIBLE);
-        } else {
-            logoutBtn.setVisibility(View.GONE);
-
-        }
-        setupCitrusConfigs();
     }
 
-    private void setupCitrusConfigs() {
-        AppEnvironment appEnvironment = ((BaseApplication) getApplication()).getAppEnvironment();
-        if (appEnvironment == AppEnvironment.PRODUCTION) {
-            Toast.makeText(MainActivity.this, "Environment Set to Production", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(MainActivity.this, "Environment Set to SandBox", Toast.LENGTH_SHORT).show();
-        }
-    }
 
     /**
      * This function sets the layout for activity
@@ -276,7 +194,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onActivityResult(requestCode, resultCode, data);
 
         // Result Code is -1 send from Payumoney activity
-        Log.d("MainActivity", "request code " + requestCode + " resultcode " + resultCode);
+        Log.d("PayUMoneyActivity", "request code " + requestCode + " resultcode " + resultCode);
         if (requestCode == PayUmoneyFlowManager.REQUEST_CODE_PAYMENT && resultCode == RESULT_OK && data !=
                 null) {
             TransactionResponse transactionResponse = data.getParcelableExtra(PayUmoneyFlowManager
@@ -297,6 +215,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                 // Response from SURl and FURL
                 String merchantResponse = transactionResponse.getTransactionDetails();
+
+                Log.d(TAG,"payuResponse"+payuResponse);
+                Log.d(TAG,"merchantResponse"+merchantResponse);
 
                 new AlertDialog.Builder(this)
                         .setCancelable(false)
@@ -319,70 +240,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     public void onClick(View v) {
         userEmail = email_et.getText().toString().trim();
         userMobile = mobile_et.getText().toString().trim();
-        if (v.getId() == R.id.logout_button || validateDetails(userEmail, userMobile)) {
-            switch (v.getId()) {
-                case R.id.pay_now_button:
-                    payNowButton.setEnabled(false);
-                    launchPayUMoneyFlow();
-                    break;
-                case R.id.logout_button:
-                    PayUmoneyFlowManager.logoutUser(getApplicationContext());
-                    logoutBtn.setVisibility(View.GONE);
-                    break;
-            }
+        if (validateDetails(userEmail, userMobile)) {
+            payNowButton.setEnabled(false);
+            launchPayUMoneyFlow();
         }
     }
 
-    private void initListeners() {
-        email_et.addTextChangedListener(new EditTextInputWatcher(email_til));
-        mobile_et.addTextChangedListener(new EditTextInputWatcher(mobile_til));
-
-
-        radioGroup_color_theme.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, @IdRes int i) {
-                mAppPreference.setOverrideResultScreen(true);
-
-                switch (i) {
-                    case R.id.radio_btn_theme_default:
-                        AppPreference.selectedTheme = -1;
-                        break;
-                    case R.id.radio_btn_theme_pink:
-                        AppPreference.selectedTheme = R.style.AppTheme_pink;
-                        break;
-                    case R.id.radio_btn_theme_grey:
-                        AppPreference.selectedTheme = R.style.AppTheme_Grey;
-                        break;
-                    case R.id.radio_btn_theme_purple:
-                        AppPreference.selectedTheme = R.style.AppTheme_purple;
-                        break;
-                    case R.id.radio_btn_theme_green:
-                        AppPreference.selectedTheme = R.style.AppTheme_Green;
-                        break;
-                    default:
-                        AppPreference.selectedTheme = -1;
-                        break;
-                }
-            }
-        });
-
-        radioGroup_select_env.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, @IdRes int i) {
-                switch (i) {
-                    case R.id.radio_btn_sandbox:
-                        selectSandBoxEnv();
-                        break;
-                    case R.id.radio_btn_production:
-                        selectProdEnv();
-                        break;
-                    default:
-                        selectSandBoxEnv();
-                        break;
-                }
-            }
-        });
-    }
 
     /**
      * This fucntion checks if email and mobile number are valid or not.
@@ -484,7 +347,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             * */
        //    generateHashFromServer(mPaymentParams);
 
-/*            *//**
+            /**
              * Do not use below code when going live
              * Below code is provided to generate hash from sdk.
              * It is recommended to generate hash from server side only.
@@ -492,9 +355,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             mPaymentParams = calculateServerSideHashAndInitiatePayment1(mPaymentParams);
 
            if (AppPreference.selectedTheme != -1) {
-                PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams,MainActivity.this, AppPreference.selectedTheme,mAppPreference.isOverrideResultScreen());
+                PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams, PayUMoneyActivity.this, AppPreference.selectedTheme,mAppPreference.isOverrideResultScreen());
             } else {
-                PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams,MainActivity.this, R.style.AppTheme_default, mAppPreference.isOverrideResultScreen());
+                PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams, PayUMoneyActivity.this, R.style.AppTheme_default, mAppPreference.isOverrideResultScreen());
             }
 
         } catch (Exception e) {
@@ -504,9 +367,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-    /**
-     * Thus function calculates the hash for transaction
-     *
+    /** Thus function calculates the hash for transaction
      * @param paymentParam payment params of transaction
      * @return payment params along with calculated merchant hash
      */
@@ -535,9 +396,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return paymentParam;
     }
 
-    /**
-     * This method generates hash from server.
-     *
+    /**This method generates hash from server.
      * @param paymentParam payments params used for hash generation
      */
     public void generateHashFromServer(PayUmoneySdkInitializer.PaymentParam paymentParam) {
@@ -571,16 +430,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return key + "=" + value + "&";
     }
 
-    /**
-     * This AsyncTask generates hash from server.
-     */
+    /**  This AsyncTask generates hash from server.*/
     private class GetHashesFromServerTask extends AsyncTask<String, String, String> {
         private ProgressDialog progressDialog;
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog = new ProgressDialog(PayUMoneyActivity.this);
             progressDialog.setMessage("Please wait...");
             progressDialog.show();
         }
@@ -649,14 +506,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             payNowButton.setEnabled(true);
 
             if (merchantHash.isEmpty() || merchantHash.equals("")) {
-                Toast.makeText(MainActivity.this, "Could not generate hash", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PayUMoneyActivity.this, "Could not generate hash", Toast.LENGTH_SHORT).show();
             } else {
                 mPaymentParams.setMerchantHash(merchantHash);
 
                 if (AppPreference.selectedTheme != -1) {
-                    PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams, MainActivity.this, AppPreference.selectedTheme, mAppPreference.isOverrideResultScreen());
+                    PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams, PayUMoneyActivity.this, AppPreference.selectedTheme, mAppPreference.isOverrideResultScreen());
                 } else {
-                    PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams, MainActivity.this, R.style.AppTheme_default, mAppPreference.isOverrideResultScreen());
+                    PayUmoneyFlowManager.startPayUMoneyFlow(mPaymentParams, PayUMoneyActivity.this, R.style.AppTheme_default, mAppPreference.isOverrideResultScreen());
                 }
             }
         }

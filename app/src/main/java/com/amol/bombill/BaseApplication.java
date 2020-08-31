@@ -1,10 +1,7 @@
-package com.rahulhooda.integrationsampleapp_payumoneypnp;
+package com.amol.bombill;
 
 import android.app.Application;
 
-/**
- * Created by Rahul Hooda on 14/7/17.
- */
 public class BaseApplication extends Application {
 
     AppEnvironment appEnvironment;

@@ -1,20 +1,18 @@
-package com.rahulhooda.integrationsampleapp_payumoneypnp;
+package com.amol.bombill;
 
 
-/**
- * Created by Rahul Hooda on 14/7/17.
- */
+
 public enum AppEnvironment {
 
     SANDBOX {
         @Override
         public String merchant_Key() {
-            return "QylhKRVd";
+            return "l0oWoGLF";
         }
 
         @Override
         public String merchant_ID() {
-            return "5960507";
+            return "7045830";
         }
 
         @Override
@@ -29,7 +27,7 @@ public enum AppEnvironment {
 
         @Override
         public String salt() {
-            return "seVTUgzrgE";
+            return "I3Q1FZBRQ6";
         }
 
         @Override
@@ -40,11 +38,11 @@ public enum AppEnvironment {
     PRODUCTION {
         @Override
         public String merchant_Key() {
-            return "QylhKRVd";
+            return "l0oWoGLF";
         }
         @Override
         public String merchant_ID() {
-            return "5960507";
+            return "7045830";
         }
         @Override
         public String furl() {
@@ -58,7 +56,7 @@ public enum AppEnvironment {
 
         @Override
         public String salt() {
-            return "seVTUgzrgE";
+            return "I3Q1FZBRQ6";
         }
 
         @Override

@@ -1,4 +1,4 @@
-package com.rahulhooda.integrationsampleapp_payumoneypnp;
+package com.amol.bombill;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

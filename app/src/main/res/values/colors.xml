@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#0083CC</color>
+    <color name="colorPrimaryDark">#0752A3</color>
+    <color name="colorAccent">#E04444</color>
 
     <color name="cardBackgroundColor">#FF0000</color>
     <color name="app_button_color">#2CA6CF</color>
