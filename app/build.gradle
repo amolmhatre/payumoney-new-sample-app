@@ -15,8 +15,8 @@ repositories {
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.rahulhooda.integrationsampleapp_payumoneypnp"
-        minSdkVersion 20
+        applicationId "com.amol.bombill"
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
